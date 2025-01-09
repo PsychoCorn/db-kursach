@@ -1,0 +1,1 @@
+const CONNECTION: &str = "host=localhost password=6561 user=postgres dbname=Kursach";

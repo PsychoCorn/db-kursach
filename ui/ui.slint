@@ -1,0 +1,116 @@
+import { Button, VerticalBox, StandardButton, StandardTableView, HorizontalBox, ScrollView } from "std-widgets.slint";
+
+export component AuthorizationWindow inherits Window {
+    callback authorization(string, string);
+    VerticalBox {
+        Text {
+            text: "Введите логин и пароль";
+        }
+
+        VerticalLayout {
+            Text {
+                text: "Логин";
+            }
+            login_input := TextInput {
+            }
+        }
+
+        VerticalLayout {
+            Text {
+                text: "Пароль";
+            }
+            password_input := TextInput {
+                input_type: password;
+            }
+        }
+
+        Button {
+            text: "Авторизовтаься";
+            clicked => {
+                root.authorization(login_input.text, password_input.text);
+            }
+        }
+    }
+}
+
+export component ErrorWindow inherits Dialog {
+    in-out property <string> message: "";
+    Text {
+        text: "Ошибка: \{root.message}";
+    }
+}
+
+export component RegisterUserMenu inherits Window {
+}
+
+export component AdminMainMenu inherits Window {
+    callback groups();
+    height: 500px;
+    width: 500px;
+    Button {
+        text: "Группы";
+        clicked => {groups();}
+    }
+}
+
+
+export component DecanMainMenu inherits Window {
+
+}
+
+export component TeacherMainMenu inherits Window {
+
+}
+
+export component StudentMainMenu inherits Window {
+
+}
+
+export component GroupTableWindow inherits Window {
+    callback export_to_excel();
+    callback add_new();
+    callback change_row(int);
+    callback refresh();
+    in-out property <[[StandardListViewItem]]> data: [];
+    min-height: 500px;
+    HorizontalLayout {
+        padding: 20px;
+        spacing: 10px;
+        Button {
+            height: 25px;
+            width: 100px;
+            text: "Обновить";
+            clicked => { refresh(); }
+        }
+        Button {
+            height: 25px;
+            width: 100px;
+            text: "Изменить";
+            clicked => { change_row(table.current-row); }
+        }
+        Button {
+            height: 25px;
+            width: 100px;
+            text: "Добавить";
+            clicked => { add_new(); }
+        }
+        Button {
+            height: 25px;
+            width: 200px;
+            text: "Экспортировать в xlsx";
+            clicked => { export_to_excel(); }
+        }
+    }
+    ScrollView {
+        table := StandardTableView {
+            columns: [
+                { title: "ID" },
+                { title: "Название" },
+                { title: "Специальность" },
+            ];
+            rows: root.data;
+        }
+    }
+    
+}
+
