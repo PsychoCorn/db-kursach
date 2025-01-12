@@ -1,5 +1,6 @@
 pub mod group;
 pub mod specialization;
+pub mod student;
 
 use crate::*;
 use std::error::Error;
@@ -18,6 +19,13 @@ pub fn show_admin_menu() -> Result<(), Box<dyn Error>> {
             group::show_full_table().unwrap();
         }
     });
+
+    ui.on_students({
+        move || {
+            student::show_full_table().unwrap();
+        }
+    });
+
     ui.show()?;
     Ok(())
 }

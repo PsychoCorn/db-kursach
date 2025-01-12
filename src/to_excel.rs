@@ -62,3 +62,33 @@ pub fn export_specialization(worksheet: &mut Worksheet) -> () {
         current_row += 1;
     }
 }
+
+pub fn export_student(worksheet: &mut Worksheet) -> () {
+    let mut client = Client::connect(CONNECTION, NoTls).unwrap();
+    let mut current_row = 1;
+
+    worksheet.write(0, 0, "ID").unwrap();
+    worksheet.write(0, 1, "Имя").unwrap();
+    worksheet.write(0, 2, "Фамилия").unwrap();
+    worksheet.write(0, 3, "Отчетство").unwrap();
+    worksheet.write(0, 4, "Группа").unwrap();
+
+    for row in client.query("select * from get_students;", &[]).unwrap() {
+        let id: i32 = row.get(0);
+        let first_name: &str = row.get(1);
+        let second_name: &str = row.get(2);
+        let middle_name: &str = row.get(3);
+        let year: i64 = row.get(4);
+        let number: i64 = row.get(5);
+        let cifr: &str = row.get(6);
+        let group = format!("{cifr}-{year}-{number}");
+        
+        worksheet.write(current_row, 0, id).unwrap();
+        worksheet.write(current_row, 1, first_name).unwrap();
+        worksheet.write(current_row, 2, second_name).unwrap();
+        worksheet.write(current_row, 3, middle_name).unwrap();
+        worksheet.write(current_row, 4, group).unwrap();
+        
+        current_row += 1;
+    }
+}

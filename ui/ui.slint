@@ -1,4 +1,4 @@
-import { Button, VerticalBox, StandardButton, StandardTableView, HorizontalBox, ScrollView } from "std-widgets.slint";
+import { Button, VerticalBox, StandardButton, StandardTableView, HorizontalBox, ScrollView, ComboBox, SpinBox } from "std-widgets.slint";
 
 export component AuthorizationWindow inherits Window {
     callback authorization(string, string);
@@ -43,6 +43,7 @@ export component RegisterUserMenu inherits Window {
 export component AdminMainMenu inherits Window {
     callback groups();
     callback specializaions();
+    callback students();
     height: 500px;
     width: 215px;
     title: "Меню администратора";
@@ -64,7 +65,7 @@ export component AdminMainMenu inherits Window {
             height: 50px;
             width: 200px;
             text: "Студенты";
-            clicked => {groups();}
+            clicked => {students();}
         }
         Button {
             height: 50px;
@@ -120,6 +121,7 @@ export component FullTableWindow inherits Window {
     in-out property <string> window_title: "";
     title: window_title;
     min-height: 500px;
+    min-width: 750px;
     HorizontalLayout {
         padding: 20px;
         spacing: 10px;
@@ -150,6 +152,7 @@ export component FullTableWindow inherits Window {
     }
     ScrollView {
         table := StandardTableView {
+            width: root.width;
             columns: root.columns;
             rows: root.data;
         }
@@ -197,6 +200,103 @@ export component ChangeSpecialization inherits Window {
         }
         Button {
             text: "Удалить специализацию";
+            clicked => {delete();}
+        }
+    }
+}
+
+export component AddGroup inherits Window {
+    callback ok(string, int, int);
+    in-out property <[string]> cifrs;
+    width: 500px;
+    title: "Добавить группу";
+    VerticalBox {
+        Text { text: "Выберите шифр"; }
+        cifr := ComboBox { model: cifrs; }
+        Text { text: "Введите год"; }
+        year := SpinBox {}
+        Text { text: "Введите номер"; }
+        number := SpinBox {}
+        Button {
+            text: "ОК";
+            clicked => {ok(cifr.current-value, year.value, number.value);}
+        }
+    }
+}
+
+export component ChangeGroup inherits Window {
+    callback ok(string, int, int);
+    callback delete();
+    in-out property <[string]> cifrs;
+    in-out property <string> cifr_value;
+    in-out property <int> year_value;
+    in-out property <int> number_value;
+    width: 500px;
+    title: "Изменить группу";
+    VerticalBox {
+        Text { text: "Выберите шифр"; }
+        cifr := ComboBox { model: cifrs; current-value: cifr_value; }
+        Text { text: "Введите год"; }
+        year := SpinBox { value: year_value; }
+        Text { text: "Введите номер"; }
+        number := SpinBox { value: number_value; }
+        Button {
+            text: "ОК";
+            clicked => {ok(cifr.current-value, year.value, number.value);}
+        }
+        Button {
+            text: "Удалить группу";
+            clicked => {delete();}
+        }
+    }
+}
+
+export component AddStudent inherits Window {
+    callback ok(string, string, string, string);
+    in-out property <[string]> groups;
+    width: 500px;
+    title: "Добавить студента";
+    VerticalBox {
+        Text { text: "Введите имя"; }
+        f_name := TextInput {}
+        Text { text: "Введите фамилию"; }
+        s_name := TextInput {}
+        Text { text: "Введите отчество"; }
+        m_name := TextInput {}
+        Text { text: "Выберите группу"; }
+        group := ComboBox { model: groups; }
+        Button {
+            text: "ОК";
+            clicked => {ok(f_name.text, s_name.text, m_name.text, group.current-value);}
+        }
+    }
+}
+
+export component ChangeStudent inherits Window {
+    callback ok(string, string, string, string);
+    callback delete();
+    in-out property <[string]> groups;
+    in-out property <string> group_value;
+    in-out property <string> f_name_value;
+    in-out property <string> s_name_value;
+    in-out property <string> m_name_value;
+    width: 500px;
+    title: "Добавить студента";
+    VerticalBox {
+        Text { text: "Введите имя"; }
+        f_name := TextInput { text: f_name_value; }
+        Text { text: "Введите фамилию"; }
+        s_name := TextInput { text: s_name_value; }
+        Text { text: "Введите отчество"; }
+        m_name := TextInput { text: m_name_value; }
+        Text { text: "Выберите группу"; }
+        group := ComboBox { model: groups; current-value: group_value; }
+        Button {
+            text: "ОК";
+            clicked => {ok(f_name.text, s_name.text, m_name.text, group.current-value);}
+        }
+        Button {
+            text: "Удалить студента";
             clicked => {delete();}
         }
     }
