@@ -11,8 +11,7 @@ export component AuthorizationWindow inherits Window {
             Text {
                 text: "Логин";
             }
-            login_input := TextInput {
-            }
+            login_input := TextInput {}
         }
 
         VerticalLayout {
@@ -35,9 +34,7 @@ export component AuthorizationWindow inherits Window {
 
 export component ErrorWindow inherits Dialog {
     in-out property <string> message: "";
-    Text {
-        text: "Ошибка: \{root.message}";
-    }
+    Text { text: "Ошибка: \{root.message}"; }
 }
 
 export component RegisterUserMenu inherits Window {
@@ -45,33 +42,83 @@ export component RegisterUserMenu inherits Window {
 
 export component AdminMainMenu inherits Window {
     callback groups();
+    callback specializaions();
     height: 500px;
-    width: 500px;
-    Button {
-        text: "Группы";
-        clicked => {groups();}
+    width: 215px;
+    title: "Меню администратора";
+    VerticalBox {
+        Text { text: "Вы вошли как администратор"; }
+        Button {
+            height: 50px;
+            width: 200px;
+            text: "Специальности";
+            clicked => {specializaions();}
+        }
+        Button {
+            height: 50px;
+            width: 200px;
+            text: "Группы";
+            clicked => {groups();}
+        }
+        Button {
+            height: 50px;
+            width: 200px;
+            text: "Студенты";
+            clicked => {groups();}
+        }
+        Button {
+            height: 50px;
+            width: 200px;
+            text: "Предметы";
+            clicked => {groups();}
+        }
+        Button {
+            height: 50px;
+            width: 200px;
+            text: "Аккаунты студентов";
+            clicked => {groups();}
+        }
+        Button {
+            height: 50px;
+            width: 200px;
+            text: "Аккаунты преподавателей";
+            clicked => {groups();}
+        }
     }
 }
 
 
 export component DecanMainMenu inherits Window {
-
+    height: 500px;
+    width: 500px;
+    title: "Меню сотрудника деканата";
 }
 
 export component TeacherMainMenu inherits Window {
-
+    height: 500px;
+    width: 500px;
+    title: "Меню преподавателя";
 }
 
 export component StudentMainMenu inherits Window {
-
+    in-out property <string> info;
+    height: 500px;
+    width: 500px;
+    title: "Меню студента";
+    VerticalBox {
+        Text { text: "Вы вошли как \{info}"; }
+    }
 }
 
-export component GroupTableWindow inherits Window {
+export component FullTableWindow inherits Window {
     callback export_to_excel();
     callback add_new();
     callback change_row(int);
     callback refresh();
     in-out property <[[StandardListViewItem]]> data: [];
+    in-out property <[TableColumn]> columns: [];
+    in-out property <string> window_title: "";
+    title: window_title;
     min-height: 500px;
     HorizontalLayout {
         padding: 20px;
@@ -103,14 +150,54 @@ export component GroupTableWindow inherits Window {
     }
     ScrollView {
         table := StandardTableView {
-            columns: [
-                { title: "ID" },
-                { title: "Название" },
-                { title: "Специальность" },
-            ];
+            columns: root.columns;
             rows: root.data;
         }
     }
     
 }
 
+export component AddSpecialization inherits Window {
+    callback ok(string, string);
+    height: 150px;
+    width: 500px;
+    title: "Добавить специализацию";
+    VerticalBox {
+        Text {
+            text: "Введите шифр";
+        }
+        cifr := TextInput {}
+        Text { text: "Введите название специальности"; }
+        name := TextInput {}
+        Button {
+            text: "ОК";
+            clicked => {ok(cifr.text, name.text);}
+        }
+    }
+}
+
+export component ChangeSpecialization inherits Window {
+    callback ok(string, string);
+    callback delete();
+    in-out property <string> cifr_value : "";
+    in-out property <string> name_value : "";
+    height: 200px;
+    width: 500px;
+    title: "Изменить специализацию";
+    VerticalBox {
+        Text {
+            text: "Введите шифр";
+        }
+        cifr := TextInput { text: cifr_value; }
+        Text { text: "Введите название специальности"; }
+        name := TextInput { text: name_value; }
+        Button {
+            text: "ОК";
+            clicked => {ok(cifr.text, name.text);}
+        }
+        Button {
+            text: "Удалить специализацию";
+            clicked => {delete();}
+        }
+    }
+}

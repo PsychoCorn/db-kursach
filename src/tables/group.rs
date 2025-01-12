@@ -1,8 +1,23 @@
 use postgres::{Client, NoTls};
-use slint::{ModelRc, SharedString, StandardListViewItem, VecModel};
+use slint::{ModelRc, SharedString, StandardListViewItem, TableColumn, VecModel};
 
 use crate::*;
 use std::{error::Error, rc::Rc};
+
+fn get_colums() -> ModelRc<TableColumn> {
+    let mut id = TableColumn::default();
+    let mut name = TableColumn::default();
+    let mut specialization = TableColumn::default();
+    id.title = "ID".into();
+    name.title = "Название".into();
+    specialization.title = "Специальность".into();
+    let colums = Rc::new(VecModel::from(vec![
+        id,
+        name,
+        specialization,
+    ]));
+    ModelRc::from(colums)
+}
 
 fn get_data() -> Result<ModelRc<ModelRc<StandardListViewItem>>, postgres::Error> {
     let mut client = Client::connect(CONNECTION, NoTls)?;
@@ -23,8 +38,8 @@ fn get_data() -> Result<ModelRc<ModelRc<StandardListViewItem>>, postgres::Error>
     Ok(ModelRc::from(data))
 }
 
-pub fn show_group_table() -> Result<(), Box<dyn Error>> {
-    let ui = crate::GroupTableWindow::new()?;
+pub fn show_full_table() -> Result<(), Box<dyn Error>> {
+    let ui = crate::FullTableWindow::new()?;
 
     ui.on_refresh({
         let ui_handle = ui.as_weak();
@@ -40,6 +55,8 @@ pub fn show_group_table() -> Result<(), Box<dyn Error>> {
         }
     );
 
+    ui.set_window_title("Группы".into());
+    ui.set_columns(get_colums());
     ui.set_data(get_data()?);
 
     ui.show()?;

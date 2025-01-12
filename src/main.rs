@@ -33,7 +33,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                     match user {
                         User::UnknownUser => { show_error_window("Не верные логин или пароль") },
                         User::Admin => {
-                            tables::show_group()
+                            tables::show_admin_menu()
+                        }
+                        User::Student(student) => {
+                            tables::show_student_menu(student)
                         }
                         _ => { println!("ok: {user:?}"); Ok(()) }
                     }.unwrap();
