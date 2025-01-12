@@ -2,7 +2,7 @@ use postgres::{Client, NoTls};
 use tables::group;
 use super::CONNECTION;
 use super::*;
-use std::hash::{DefaultHasher, Hash, Hasher};
+use std::{fmt::{write, Display}, hash::{DefaultHasher, Hash, Hasher}};
 
 #[derive(Debug, Clone)]
 pub(super) struct  Group {
@@ -14,11 +14,23 @@ pub(super) struct  Group {
     pub cifr: String
 }
 
+impl Display for Group {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}-{}-{}", self.cifr, self.year, self.number)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub(super) struct  FullName {
     pub first_name: String,
     pub second_name: String,
     pub middle_name: String
+}
+
+impl Display for FullName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {} {}", self.second_name, self.first_name, self.middle_name)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -37,6 +49,12 @@ impl Student {
             full_name,
             group
         }
+    }
+}
+
+impl Display for Student {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {}", self.full_name, self.group)
     }
 }
 
