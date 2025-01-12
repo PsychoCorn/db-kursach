@@ -62,6 +62,10 @@ pub fn show_full_table() -> Result<(), Box<dyn Error>> {
     ui.on_change_row({
         let ui_handle = ui.as_weak();
         move |row_index| {
+            if row_index < 0 {
+                show_error_window("Выберите строку").unwrap();
+                return;
+            }
             let ui = ui_handle.unwrap();
             let data = ui.get_data();
             let data: &VecModel<ModelRc<StandardListViewItem>> = data.as_any().downcast_ref().unwrap();
@@ -115,7 +119,7 @@ fn change_row(id: i64, cifr: &str, name: &str) -> Result<(), Box<dyn Error>> {
 
     ui.on_ok({
         let ui_handle = ui.as_weak();
-        move |cifr: SharedString, name: SharedString| {
+        move |cifr, name| {
             let ui = ui_handle.unwrap();
             let client = Client::connect(CONNECTION, NoTls);
             if let Ok(mut client) = client {

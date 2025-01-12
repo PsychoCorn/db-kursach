@@ -6,15 +6,21 @@ use std::{error::Error, rc::Rc};
 
 fn get_colums() -> ModelRc<TableColumn> {
     let mut id = TableColumn::default();
-    let mut name = TableColumn::default();
-    let mut specialization = TableColumn::default();
+    let mut first_name = TableColumn::default();
+    let mut second_name = TableColumn::default();
+    let mut middle_name = TableColumn::default();
+    let mut group = TableColumn::default();
     id.title = "ID".into();
-    name.title = "Название".into();
-    specialization.title = "Специальность".into();
+    first_name.title = "Имя".into();
+    second_name.title = "Фамилия".into();
+    middle_name.title = "Отчетство".into();
+    group.title = "Группа".into();
     let colums = Rc::new(VecModel::from(vec![
         id,
-        name,
-        specialization,
+        first_name,
+        second_name,
+        middle_name,
+        group
     ]));
     ModelRc::from(colums)
 }
@@ -23,15 +29,22 @@ fn get_data() -> Result<ModelRc<ModelRc<StandardListViewItem>>, postgres::Error>
     let mut client = Client::connect(CONNECTION, NoTls)?;
     let mut data: Rc<VecModel<ModelRc<StandardListViewItem>>> = 
         Rc::from(VecModel::from(Vec::new()));
-    for row in client.query("select * from get_group;", &[])? {
+    for row in client.query("select * from get_students;", &[])? {
         let id: i32 = row.get(0);
-        let name: &str = row.get(1);
-        let specialization: &str = row.get(2);
+        let first_name: &str = row.get(1);
+        let second_name: &str = row.get(2);
+        let middle_name: &str = row.get(3);
+        let year: i64 = row.get(4);
+        let number: i64 = row.get(5);
+        let cifr: &str = row.get(6);
+        let group = format!("{cifr}-{year}-{number}");
         
         let row_data: Rc<VecModel<StandardListViewItem>> = Rc::from(VecModel::from(vec![
             id.to_string().as_str().into(),
-            name.into(),
-            specialization.into()
+            first_name.into(),
+            second_name.into(),
+            middle_name.into(),
+            group.as_str().into()
         ]));
         data.push(ModelRc::from(row_data));
     }
@@ -51,7 +64,7 @@ pub fn show_full_table() -> Result<(), Box<dyn Error>> {
 
     ui.on_export_to_excel(
         move || {
-            crate::to_excel::table_to_excel(crate::to_excel::export_group);
+            crate::to_excel::table_to_excel(crate::to_excel::export_student);
         }
     );
 
@@ -71,19 +84,22 @@ pub fn show_full_table() -> Result<(), Box<dyn Error>> {
             let data: &VecModel<ModelRc<StandardListViewItem>> = data.as_any().downcast_ref().unwrap();
             let data_row = data.row_data(row_index as usize).unwrap();
             let data_row: &VecModel<StandardListViewItem> = data_row.as_any().downcast_ref().unwrap();
-            let id: i64 = data_row.row_data(0).unwrap().text.parse().unwrap();
-            let group = data_row.row_data(1).unwrap().text;
-            if let Some((cifr, year, number)) = group_from_str(&group) {
-                if let Err(_) = change_row(id as i32, year, number, &cifr) {
-                    show_error_window("Ошибка данных").unwrap();
-                }
-            } else {
+
+            let id: i32 = data_row.row_data(0).unwrap().text.parse().unwrap();
+            let f_name: &str = &data_row.row_data(1).unwrap().text;
+            let s_name: &str = &data_row.row_data(2).unwrap().text;
+            let m_name: &str = &data_row.row_data(3).unwrap().text;
+            let group: &str = &data_row.row_data(4).unwrap().text;
+
+            if let Err(_) = change_row(
+                id, f_name, s_name, m_name, group
+            ) {
                 show_error_window("Ошибка данных").unwrap();
             }
         }
     });
 
-    ui.set_window_title("Группы".into());
+    ui.set_window_title("Студенты".into());
     ui.set_columns(get_colums());
     ui.set_data(get_data()?);
 
@@ -91,37 +107,42 @@ pub fn show_full_table() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn get_cifrs() -> Result<Vec<SharedString>, postgres::Error> {
-    let mut cifrs: Vec<SharedString> = Vec::new();
+fn get_groups() -> Result<Vec<SharedString>, postgres::Error> {
+    let mut groups: Vec<SharedString> = Vec::new();
     let mut client = Client::connect(CONNECTION, NoTls)?;
-    for row in client.query(r#"select cifr from "specialization";"#, &[])? {
+    for row in client.query("select name from get_group;", &[])? {
         let cifr: &str = row.get(0);
-        cifrs.push(cifr.into());
+        groups.push(cifr.into());
     }
-    Ok(cifrs)
+    Ok(groups)
 }
 
 fn add_new() -> Result<(), Box<dyn Error>> {
-    let ui = crate::AddGroup::new()?;
+    let ui = crate::AddStudent::new()?;
 
     ui.on_ok({
         let ui_handle = ui.as_weak();
-        move |cifr, year, number| {
+        move |f_name, s_name, m_name, group| {
             let ui = ui_handle.unwrap();
             let client = Client::connect(CONNECTION, NoTls);
             if let Ok(mut client) = client {
-                let cifr: &str = &cifr;
-                let query = format!("select add_group({year}, {number}, '{cifr}');");
-                if let Err(_) = client.query(&query, &[]) {
+                if let Some((cifr, year, number)) = crate::tables::group::group_from_str(&group) {
+                    let query = format!(
+                        "select add_student('{f_name}', '{s_name}', '{m_name}', '{cifr}', {year}, {number});"
+                    );
+                    if let Err(_) = client.query(&query, &[]) {
+                        show_error_window("Ошибка данных").unwrap();
+                    }
+                } else {
                     show_error_window("Ошибка данных").unwrap();
                 }
             }
         }
     });
 
-    ui.set_cifrs(
+    ui.set_groups(
         ModelRc::from( Rc::new(
-            VecModel::from( get_cifrs()? )
+            VecModel::from( get_groups()? )
         ) )
     );
 
@@ -129,18 +150,23 @@ fn add_new() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn change_row(id: i32, year: i32, number: i32, cifr: &str) -> Result<(), Box<dyn Error>> {
-    let ui = crate::ChangeGroup::new()?;
+fn change_row(id: i32, f_name: &str, s_name: &str, m_name: &str, group: &str) -> Result<(), Box<dyn Error>> {
+    let ui = crate::ChangeStudent::new()?;
 
     ui.on_ok({
         let ui_handle = ui.as_weak();
-        move |cifr, year, number| {
+        move |f_name, s_name, m_name, group| {
             let ui = ui_handle.unwrap();
             let client = Client::connect(CONNECTION, NoTls);
             if let Ok(mut client) = client {
-                let cifr: &str = &cifr;
-                let query = format!("select update_group({id}, {year}, {number}, '{cifr}');");
-                if let Err(_) = client.query(&query, &[]) {
+                if let Some((cifr, year, number)) = crate::tables::group::group_from_str(&group) {
+                    let query = format!(
+                        "select update_student({id}, '{f_name}', '{s_name}', '{m_name}', '{cifr}', {year}, {number});"
+                    );
+                    if let Err(_) = client.query(&query, &[]) {
+                        show_error_window("Ошибка данных").unwrap();
+                    }
+                } else {
                     show_error_window("Ошибка данных").unwrap();
                 }
             }
@@ -151,7 +177,7 @@ fn change_row(id: i32, year: i32, number: i32, cifr: &str) -> Result<(), Box<dyn
         move || {
             let client = Client::connect(CONNECTION, NoTls);
             if let Ok(mut client) = client {
-                let query = format!("select delete_group({id});");
+                let query = format!("select delete_student({id});");
                 if let Err(_) = client.query(&query, &[]) {
                     show_error_window("Ошибка данных").unwrap();
                 }
@@ -159,24 +185,17 @@ fn change_row(id: i32, year: i32, number: i32, cifr: &str) -> Result<(), Box<dyn
         }
     );
 
-    ui.set_cifr_value(cifr.into());
-    ui.set_number_value(number);
-    ui.set_year_value(year);
+    ui.set_f_name_value(f_name.into());
+    ui.set_s_name_value(s_name.into());
+    ui.set_m_name_value(m_name.into());
+    ui.set_group_value(group.into());
 
-    ui.set_cifrs(
+    ui.set_groups(
         ModelRc::from( Rc::new(
-            VecModel::from( get_cifrs()? )
+            VecModel::from( get_groups()? )
         ) )
     );
 
     ui.show()?;
     Ok(())
-}
-
-pub fn group_from_str(s: &str) -> Option<(&str, i32, i32)> {
-    let mut iter = s.split('-');
-    let cifr = iter.next()?.into();
-    let year: i32 = iter.next()?.parse().unwrap_or_default();
-    let number: i32 = iter.next()?.parse().unwrap_or_default();
-    Some((cifr, year, number))
 }
