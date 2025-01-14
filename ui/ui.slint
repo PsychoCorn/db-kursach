@@ -44,11 +44,15 @@ export component AdminMainMenu inherits Window {
     callback groups();
     callback specializaions();
     callback students();
-    height: 500px;
+    callback subjects();
+    callback academic_plan();
+    callback students_cards();
+    callback student_accounts();
+    callback teacher_accounts();
     width: 215px;
-    title: "Меню администратора";
+    title: "Меню сотрудника деканата";
     VerticalBox {
-        Text { text: "Вы вошли как администратор"; }
+        Text { text: "Вы вошли сотрудник деканата"; }
         Button {
             height: 50px;
             width: 200px;
@@ -71,19 +75,31 @@ export component AdminMainMenu inherits Window {
             height: 50px;
             width: 200px;
             text: "Предметы";
-            clicked => {groups();}
+            clicked => {subjects();}
+        }
+        Button {
+            height: 50px;
+            width: 200px;
+            text: "Учебный план";
+            clicked => {academic_plan();}
+        }
+        Button {
+            height: 50px;
+            width: 200px;
+            text: "Успеваемость";
+            clicked => {students_cards();}
         }
         Button {
             height: 50px;
             width: 200px;
             text: "Аккаунты студентов";
-            clicked => {groups();}
+            clicked => {student_accounts();}
         }
         Button {
             height: 50px;
             width: 200px;
             text: "Аккаунты преподавателей";
-            clicked => {groups();}
+            clicked => {teacher_accounts();}
         }
     }
 }
@@ -96,18 +112,50 @@ export component DecanMainMenu inherits Window {
 }
 
 export component TeacherMainMenu inherits Window {
-    height: 500px;
-    width: 500px;
+    callback show_group(string, string);
+    callback update_groups(string);
+    in-out property <[string]> subjects;
+    in-out property <[string]> groups;
+    width: 1200px;
     title: "Меню преподавателя";
+    VerticalBox {
+        Text { text: "Выберите курс"; }
+        subject := ComboBox { 
+            model: subjects; 
+            selected(current-value) => {
+                update_groups(current-value);
+            }
+        }
+        Text { text: "Выберите группу"; }
+        group := ComboBox { model: groups; }
+        Button {
+            text: "Показать группу";
+            clicked => {show_group(subject.current-value, group.current-value);}
+        }
+    }
 }
 
 export component StudentMainMenu inherits Window {
     in-out property <string> info;
-    height: 500px;
+    callback group();
+    callback marks();
+    callback plan();
     width: 500px;
     title: "Меню студента";
     VerticalBox {
         Text { text: "Вы вошли как \{info}"; }
+        Button {
+            text: "Группа";
+            clicked => {group();}
+        }
+        Button {
+            text: "Учебный план";
+            clicked => {plan();}
+        }
+        Button {
+            text: "Успеваемость";
+            clicked => {marks();}
+        }
     }
 }
 
@@ -121,7 +169,7 @@ export component FullTableWindow inherits Window {
     in-out property <string> window_title: "";
     title: window_title;
     min-height: 500px;
-    min-width: 750px;
+    min-width: 1500px;
     HorizontalLayout {
         padding: 20px;
         spacing: 10px;
@@ -299,5 +347,398 @@ export component ChangeStudent inherits Window {
             text: "Удалить студента";
             clicked => {delete();}
         }
+    }
+}
+
+export component AddSubject inherits Window {
+    callback ok(string);
+    height: 150px;
+    width: 500px;
+    title: "Добавить предмет";
+    VerticalBox {
+        Text {
+            text: "Введите название";
+        }
+        name := TextInput {}
+        Button {
+            text: "ОК";
+            clicked => {ok(name.text);}
+        }
+    }
+}
+
+export component ChangeSubject inherits Window {
+    callback ok(string);
+    callback delete();
+    in-out property <string> name_value;
+    height: 150px;
+    width: 500px;
+    title: "Изменить предмет";
+    VerticalBox {
+        Text {
+            text: "Введите название";
+        }
+        name := TextInput { text: name_value; }
+        Button {
+            text: "ОК";
+            clicked => {ok(name.text);}
+        }
+        Button {
+            text: "Удалить предмет";
+            clicked => {delete();}
+        }
+    }
+}
+
+export component AddAcademicPlan inherits Window {
+    callback ok(string, string, string, int, int);
+    in-out property <[string]> specializaions;
+    in-out property <[string]> subjects;
+    in-out property <[string]> c_types;
+    width: 500px;
+    title: "Добавить запись в учебный план";
+    VerticalBox {
+        Text { text: "Выберите специализацию"; }
+        specializaion := ComboBox { model: specializaions; }
+        Text { text: "Выберите предмет"; }
+        subject := ComboBox { model: subjects; }
+        Text { text: "Выберите вид аттестации"; }
+        c_type := ComboBox { model: c_types; }
+        Text { text: "Введите количетво часов"; }
+        hours := SpinBox { maximum: 10000; }
+        Text { text: "Введите номер семестра"; }
+        semester := SpinBox { maximum: 10000; }
+        Button {
+            text: "ОК";
+            clicked => {ok(specializaion.current-value, subject.current-value, c_type.current-value, hours.value, semester.value);}
+        }
+    }
+}
+
+export component ChangeAcademicPlan inherits Window {
+    callback ok(string, string, string, int, int);
+    callback delete();
+    in-out property <[string]> specializations;
+    in-out property <[string]> subjects;
+    in-out property <[string]> c_types;
+    in-out property <string> specialization_value;
+    in-out property <string> subject_value;
+    in-out property <string> c_type_value;
+    in-out property <int> hours_value;
+    in-out property <int> semester_value;
+    width: 500px;
+    title: "Изменить запись в учебном плане";
+    VerticalBox {
+        Text { text: "Выберите специализацию"; }
+        specialization := ComboBox { model: specializations; current-value: specialization_value; }
+        Text { text: "Выберите предмет"; }
+        subject := ComboBox { model: subjects; current-value: subject_value; }
+        Text { text: "Выберите вид аттестации"; }
+        c_type := ComboBox { model: c_types; current-value: c_type_value; }
+        Text { text: "Введите количество часов"; }
+        hours := SpinBox { value: hours_value;  maximum: 10000; }
+        Text { text: "Введите номер семестра"; }
+        semester := SpinBox { value: semester_value;  maximum: 10000; }
+        Button {
+            text: "ОК";
+            clicked => {ok(specialization.current-value, subject.current-value, c_type.current-value, hours.value, semester.value);}
+        }
+        Button {
+            text: "Удалить запись";
+            clicked => {delete();}
+        }
+    }
+}
+
+export component AdminChooseGroup inherits Window {
+    callback ok(string);
+    in-out property <[string]> groups;
+    height: 150px;
+    width: 500px;
+    title: "Выбор группы";
+    VerticalBox {
+        Text {
+            text: "Выберите группу";
+        }
+        group := ComboBox { model: groups; }
+        Button {
+            text: "ОК";
+            clicked => {ok(group.current-value);}
+        }
+    }
+}
+
+export component AdminMarksTableWindow inherits Window {
+    callback export_to_excel();
+    callback refresh();
+    in-out property <[[StandardListViewItem]]> data: [];
+    in-out property <string> window_title: "";
+    title: window_title;
+    min-height: 500px;
+    min-width: 1500px;
+    HorizontalLayout {
+        padding: 20px;
+        spacing: 10px;
+        Button {
+            height: 25px;
+            width: 100px;
+            text: "Обновить";
+            clicked => { refresh(); }
+        }
+        Button {
+            height: 25px;
+            width: 200px;
+            text: "Экспортировать в xlsx";
+            clicked => { export_to_excel(); }
+        }
+    }
+    ScrollView {
+        table := StandardTableView {
+            width: root.width;
+            columns: [
+                {title: "ID"},
+                {title: "Имя"},
+                {title: "Фамилия"},
+                {title: "Предмет"},
+                {title: "Семестр"},
+                {title: "Вид аттестации"},
+                {title: "Оценка"},
+            ];
+            rows: root.data;
+        }
+    }
+    
+}
+
+export component AddStudentLoggin inherits Window {
+    callback ok(string, string, int);
+    width: 500px;
+    title: "Добавить логин студента";
+    VerticalBox {
+        Text {
+            text: "Введите логин";
+        }
+        login := TextInput {}
+        Text {
+            text: "Введите пароль";
+        }
+        password := TextInput {}
+        Text {
+            text: "Введите ID студента";
+        }
+        id := SpinBox { minimum: 1; maximum: 10000000; }
+        Button {
+            text: "ОК";
+            clicked => {ok(login.text, password.text, id.value);}
+        }
+    }
+}
+
+export component ChangeStudentLoggin inherits Window {
+    callback delete();
+    Button {
+        text: "Удалить";
+        clicked => {delete();}
+    }
+}
+
+export component AddTeacherLoggin inherits Window {
+    callback ok(string, string);
+    width: 500px;
+    title: "Добавить логин преподавателя";
+    VerticalBox {
+        Text {
+            text: "Введите логин";
+        }
+        login := TextInput {}
+        Text {
+            text: "Введите пароль";
+        }
+        password := TextInput {}
+        Button {
+            text: "ОК";
+            clicked => {ok(login.text, password.text);}
+        }
+    }
+}
+
+export component ChangeTeacherLoggin inherits Window {
+    callback delete();
+    Button {
+        text: "Удалить";
+        clicked => {delete();}
+    }
+}
+
+export component TeacherTableWindow inherits Window {
+    callback mark(int);
+    callback refresh();
+    in-out property <[[StandardListViewItem]]> data: [];
+    title: "Оценка студентов";
+    min-height: 500px;
+    min-width: 1500px;
+    HorizontalLayout {
+        padding: 20px;
+        spacing: 10px;
+        Button {
+            height: 25px;
+            width: 100px;
+            text: "Обновить";
+            clicked => { refresh(); }
+        }
+        Button {
+            height: 25px;
+            width: 100px;
+            text: "Оценить";
+            clicked => { mark(table.current-row); }
+        }
+    }
+    ScrollView {
+        table := StandardTableView {
+            width: root.width;
+            columns: [
+                {title: "ID"},
+                {title: "ФИО"},
+                {title: "Вид аттестации"},
+                {title: "Оценка"}
+            ];
+            rows: root.data;
+        }
+    }
+    
+}
+
+export component TeacherMarkWindow inherits Window {
+    callback ok(string);
+    in-out property <string> student_name: "";
+    in-out property <[string]> marks: [];
+    title: "Оценка студентов";
+    min-width: 500px;
+    VerticalLayout {
+        HorizontalLayout {
+            padding: 20px;
+            spacing: 10px;
+            Text { width: 300px; text: student_name; }
+            Text { text: "Оценка"; }
+            mark := ComboBox { model: marks; }
+        }
+        Button {
+            text: "Оценить";
+            clicked => { ok(mark.current-value); }
+        }
+    }
+}
+
+export component StudentGroupTableWindow inherits Window {
+    callback export_to_excel();
+    callback refresh();
+    in-out property <[[StandardListViewItem]]> data: [];
+    title: "Список группы";
+    min-width: 500px;
+    min-height: 300px;
+    HorizontalLayout {
+        padding: 20px;
+        spacing: 10px;
+        Button {
+            height: 25px;
+            width: 100px;
+            text: "Обновить";
+            clicked => { refresh(); }
+        }
+        Button {
+            height: 25px;
+            width: 200px;
+            text: "Экспортировать в xlsx";
+            clicked => { export_to_excel(); }
+        }
+    }
+    ScrollView {
+        table := StandardTableView {
+            width: root.width;
+            columns: [{title: "ФИО"}];
+            rows: root.data;
+        }
+    }
+    
+}
+
+export component StudentPlanTableWindow inherits Window {
+    callback export_to_excel(int);
+    callback refresh(int);
+    in-out property <[[StandardListViewItem]]> data: [];
+    title: "Учебный план";
+    min-width: 1000px;
+    min-height: 300px;
+    VerticalBox {
+        HorizontalLayout {
+            Button {
+                height: 25px;
+                width: 100px;
+                text: "Обновить";
+                clicked => { refresh(course.value); }
+            }
+            Button {
+                height: 25px;
+                width: 200px;
+                text: "Экспортировать в xlsx";
+                clicked => { export_to_excel(course.value); }
+            }
+        }
+    
+        Text {text: "Выберите курс";}
+        course := SpinBox {minimum: 1; maximum: 10; value: 1;}
+        ScrollView {
+            table := StandardTableView {
+                width: root.width;
+                columns: [
+                    {title: "Предмет"},
+                    {title: "Семестр"},
+                    {title: "Часы"},
+                    {title: "Вид аттестации"},
+                ];
+                rows: root.data;
+            }
+        }
+
+    }
+}
+
+export component StudentMarksTableWindow inherits Window {
+    callback export_to_excel();
+    callback refresh();
+    in-out property <[[StandardListViewItem]]> data: [];
+    title: "Успеваемость";
+    min-width: 1000px;
+    min-height: 300px;
+    VerticalBox {
+        HorizontalLayout {
+            Button {
+                height: 25px;
+                width: 100px;
+                text: "Обновить";
+                clicked => { refresh(); }
+            }
+            Button {
+                height: 25px;
+                width: 200px;
+                text: "Экспортировать в xlsx";
+                clicked => { export_to_excel(); }
+            }
+        }
+    
+        ScrollView {
+            table := StandardTableView {
+                width: root.width;
+                columns: [
+                    {title: "Предмет"},
+                    {title: "Семестр"},
+                    {title: "Часы"},
+                    {title: "Вид аттестации"},
+                    {title: "Оценка"},
+                ];
+                rows: root.data;
+            }
+        }
+
     }
 }
