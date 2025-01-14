@@ -1,3 +1,4 @@
+use authorization::Student;
 use postgres::{Client, NoTls};
 use slint::{Model, ModelRc, SharedString, StandardListViewItem, TableColumn, VecModel};
 
@@ -179,4 +180,54 @@ pub fn group_from_str(s: &str) -> Option<(&str, i32, i32)> {
     let year: i32 = iter.next()?.parse().unwrap_or_default();
     let number: i32 = iter.next()?.parse().unwrap_or_default();
     Some((cifr, year, number))
+}
+
+pub fn show_group_for_student(student: &Student) -> Result<(), Box<dyn Error>> {
+    let ui = crate::StudentGroupTableWindow::new()?;
+
+    ui.on_refresh({
+        let ui_handle = ui.as_weak();
+        let student = student.clone();
+        move || {
+            let ui = ui_handle.unwrap();
+            ui.set_data(get_data_for_student(&student).unwrap());
+        }
+    });
+
+    ui.on_export_to_excel({
+        let ui_handle = ui.as_weak();
+        let student = student.clone();
+        move || {
+            crate::to_excel::export_student_group(&student);
+        }
+    });
+
+    ui.set_data(get_data_for_student(student)?);
+
+    ui.show()?;
+    Ok(())
+}
+
+fn get_data_for_student(student: &Student) -> Result<ModelRc<ModelRc<StandardListViewItem>>, postgres::Error> {
+    let mut client = Client::connect(CONNECTION, NoTls)?;
+    let mut data: Rc<VecModel<ModelRc<StandardListViewItem>>> = 
+        Rc::from(VecModel::from(Vec::new()));
+    let query = format!(
+        "SELECT second_name, first_name, middle_name FROM get_students_in_group('{}', {}, {}) order by second_name;",
+        student.group.cifr,
+        student.group.year,
+        student.group.number,
+    );
+    for row in client.query(&query, &[]).unwrap() {
+        let s_name: &str = row.get(0);
+        let f_name: &str = row.get(1);
+        let m_name: &str = row.get(2);
+        let name = format!("{s_name} {f_name} {m_name}");
+        
+        let row_data: Rc<VecModel<StandardListViewItem>> = Rc::from(VecModel::from(vec![
+            name.as_str().into()            
+        ]));
+        data.push(ModelRc::from(row_data));
+    }
+    Ok(ModelRc::from(data))
 }
